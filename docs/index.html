@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0">
+    <title>Review Artist/Designers</title>
+
+    <script type="text/javascript" src="extras/jquery.min.1.7.js"></script> 
+    <script type="text/javascript" src="extras/modernizr.2.5.3.min.js"></script> 
+    <script type="text/javascript" src="lib/hash.js"></script>
+</head>
+<body>
+
+<div id="canvas">
+    <div class="zoom-icon zoom-icon-in"></div>
+    <div class="magazine-viewport">
+        <div class="container">
+            <div class="magazine">
+                <div ignore="1" class="next-button"></div>
+                <div ignore="1" class="previous-button"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+function loadApp() {
+    $('#canvas').fadeIn(1000);
+    var flipbook = $('.magazine');
+
+    // Check if the CSS was already loaded
+    if (flipbook.width() == 0 || flipbook.height() == 0) {
+        setTimeout(loadApp, 10);
+        return;
+    }
+
+    // Function to set flipbook dimensions based on window width
+    function setFlipbookSize() {
+        const isMobile = window.innerWidth <= 780;
+        const width = isMobile ? 360 : 922;
+        const height = isMobile ? 220 : 600;
+
+        flipbook.turn('size', width, height);  // Adjust flipbook size dynamically
+    }
+
+    // Initialize flipbook with responsive size
+    flipbook.turn({
+        width: 922,
+        height: 600,
+        duration: 1000,
+        acceleration: !isChrome(),
+        gradients: true,
+        autoCenter: true,
+        elevation: 50,
+        pages: 10,
+        when: {
+            turning: function(event, page, view) {
+                var book = $(this),
+                    currentPage = book.turn('page'),
+                    pages = book.turn('pages');
+                Hash.go('page/' + page).update();
+                disableControls(page);
+                $('.thumbnails .page-' + currentPage).parent().removeClass('current');
+                $('.thumbnails .page-' + page).parent().addClass('current');
+            },
+            turned: function(event, page, view) {
+                disableControls(page);
+                $(this).turn('center');
+                if (page == 1) {
+                    $(this).turn('peel', 'br');
+                }
+            },
+            missing: function(event, pages) {
+                for (var i = 0; i < pages.length; i++) addPage(pages[i], $(this));
+            }
+        }
+    });
+
+    setFlipbookSize(); // Set initial size
+    $(window).resize(setFlipbookSize); // Update size on window resize
+
+    // Resize viewport
+    $(window).resize(function() {
+        resizeViewport();
+    }).bind('orientationchange', function() {
+        resizeViewport();
+    });
+
+    // Using arrow keys to turn the page
+
+	$(document).keydown(function(e){
+
+var previous = 37, next = 39, esc = 27;
+
+switch (e.keyCode) {
+    case previous:
+
+        // left arrow
+        $('.magazine').turn('previous');
+        e.preventDefault();
+
+    break;
+    case next:
+
+        //right arrow
+        $('.magazine').turn('next');
+        e.preventDefault();
+
+    break;
+    case esc:
+        
+        $('.magazine-viewport').zoom('zoomOut');	
+        e.preventDefault();
+
+    break;
+}
+});
+
+    // More flipbook setup...
+
+    resizeViewport();
+    $('.magazine').addClass('animated');
+}
+
+// Load the HTML4 version if there's no CSS transform
+yepnope({
+    test: Modernizr.csstransforms,
+    yep: ['lib/turn.js'],
+    nope: ['lib/turn.html4.min.js'],
+    both: ['js/magazine.js', 'css/magazine.css'],
+    complete: loadApp
+});
+</script>
+
+</body>
+</html>
